@@ -25,6 +25,19 @@ interface GeminiResponse {
   };
 }
 
+// ChatGPT RapidAPI format (simple text response)
+interface ChatGPTMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+interface ChatGPTResponse {
+  text?: string;
+  finish_reason?: string;
+  model?: string;
+  server?: string;
+}
+
 interface EntryData {
   date: Date;
   moodScore: number;
@@ -92,6 +105,100 @@ export async function callGeminiAI(contents: GeminiMessage[]): Promise<string> {
     req.write(JSON.stringify({ contents }));
     req.end();
   });
+}
+
+// Call ChatGPT RapidAPI (chatgpt-api8)
+export async function callChatGPTAPI(prompt: string): Promise<string> {
+  const apiKey = process.env.RAPIDAPI_KEY;
+  if (!apiKey) {
+    throw new Error('RAPIDAPI_KEY không được cấu hình');
+  }
+
+  return new Promise((resolve, reject) => {
+    const options = {
+      method: 'POST',
+      hostname: 'chatgpt-api8.p.rapidapi.com',
+      port: null,
+      path: '/',
+      headers: {
+        'x-rapidapi-key': apiKey,
+        'x-rapidapi-host': 'chatgpt-api8.p.rapidapi.com',
+        'Content-Type': 'application/json',
+      },
+    };
+
+    const req = https.request(options, function (res) {
+      const chunks: Buffer[] = [];
+
+      res.on('data', function (chunk) {
+        chunks.push(chunk);
+      });
+
+      res.on('end', function () {
+        try {
+          const body = Buffer.concat(chunks).toString();
+          console.log('ChatGPT Response:', body);
+
+          const parsed: ChatGPTResponse = JSON.parse(body);
+
+          if (parsed && parsed.text) {
+            resolve(parsed.text);
+          } else {
+            console.error('Invalid ChatGPT response:', parsed);
+            reject(new Error(`Không nhận được phản hồi từ ChatGPT. Response: ${body.substring(0, 200)}`));
+          }
+        } catch (err) {
+          console.error('ChatGPT parse error:', err);
+          reject(err);
+        }
+      });
+    });
+
+    req.on('error', function (error) {
+      reject(error);
+    });
+
+    const messages: ChatGPTMessage[] = [
+      { role: 'system', content: 'Bạn là một chuyên gia tâm lý học nói tiếng Việt, thân thiện và ấm áp.' },
+      { role: 'user', content: prompt },
+    ];
+
+    req.write(JSON.stringify(messages));
+    req.end();
+  });
+}
+
+// Generic wrapper: choose provider via AI_PROVIDER env var ("chatgpt" or "gemini")
+export async function callAI(prompt: string): Promise<string> {
+  const provider = (process.env.AI_PROVIDER || 'chatgpt').toLowerCase();
+
+  // Primary attempt
+  try {
+    if (provider === 'gemini') {
+      const contents = [{ role: 'user', parts: [{ text: prompt }] }];
+      return await callGeminiAI(contents as any);
+    }
+
+    return await callChatGPTAPI(prompt);
+  } catch (primaryError) {
+    console.error(`Primary provider (${provider}) failed:`, primaryError);
+
+    // Fallback to the other provider
+    const fallback = provider === 'chatgpt' ? 'gemini' : 'chatgpt';
+    try {
+      console.log(`Attempting fallback provider: ${fallback}`);
+      if (fallback === 'gemini') {
+        const contents = [{ role: 'user', parts: [{ text: prompt }] }];
+        return await callGeminiAI(contents as any);
+      }
+      return await callChatGPTAPI(prompt);
+    } catch (fallbackError) {
+      console.error('Fallback provider also failed:', fallbackError);
+      // Throw the original error for better debugging
+      if (primaryError instanceof Error) throw primaryError;
+      throw new Error('Cả hai provider AI đều thất bại');
+    }
+  }
 }
 
 /**
@@ -167,15 +274,8 @@ ${allNotes.join('\n')}
 - Không dài quá 400 từ
 - Sử dụng emoji phù hợp để tạo cảm giác gần gũi`;
 
-  const contents: GeminiMessage[] = [
-    {
-      role: 'user',
-      parts: [{ text: prompt }],
-    },
-  ];
-
   try {
-    const response = await callGeminiAI(contents);
+    const response = await callAI(prompt);
     return response;
   } catch (error) {
     console.error('AI Error:', error);
