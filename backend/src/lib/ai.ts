@@ -65,15 +65,21 @@ export async function callGeminiAI(contents: GeminiMessage[]): Promise<string> {
       res.on('end', function () {
         try {
           const body = Buffer.concat(chunks);
-          const response: GeminiResponse = JSON.parse(body.toString());
+          const bodyString = body.toString();
+          
+          console.log('AI Response:', bodyString);
+          
+          const response: GeminiResponse = JSON.parse(bodyString);
           
           if (response.candidates && response.candidates.length > 0) {
             const text = response.candidates[0].content.parts[0].text;
             resolve(text);
           } else {
-            reject(new Error('Không nhận được phản hồi từ AI'));
+            console.error('Invalid AI response structure:', response);
+            reject(new Error(`Không nhận được phản hồi từ AI. Response: ${bodyString.substring(0, 200)}`));
           }
         } catch (error) {
+          console.error('Parse error:', error);
           reject(error);
         }
       });
@@ -173,6 +179,11 @@ ${allNotes.join('\n')}
     return response;
   } catch (error) {
     console.error('AI Error:', error);
+    console.error('Error details:', JSON.stringify(error, null, 2));
+    
+    if (error instanceof Error) {
+      throw new Error(`Không thể tạo báo cáo từ AI: ${error.message}`);
+    }
     throw new Error('Không thể tạo báo cáo từ AI');
   }
 }
