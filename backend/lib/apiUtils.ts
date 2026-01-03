@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 // Generate JWT token
-export function generateToken(userId: number): string {
+export function generateToken(userId: string): string {
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 }
 
@@ -28,7 +28,7 @@ export async function getUserFromRequest(request: Request) {
   }
   
   const token = authHeader.substring(7);
-  const decoded = verifyToken(token) as { userId: number } | null;
+  const decoded = verifyToken(token) as { userId: string } | null;
   
   return decoded ? decoded.userId : null;
 }

@@ -11,7 +11,7 @@ export async function GET(
     if (!userId) return errorResponse('Unauthorized', 401);
     
     const params = await props.params;
-    const entryId = parseInt(params.id);
+    const entryId = params.id;
     
     const entry = await prisma.dailyEntry.findFirst({
       where: {
@@ -40,7 +40,7 @@ export async function DELETE(
     if (!userId) return errorResponse('Unauthorized', 401);
     
     const params = await props.params;
-    const entryId = parseInt(params.id);
+    const entryId = params.id;
     
     // Check if entry exists and belongs to user
     const entry = await prisma.dailyEntry.findFirst({
