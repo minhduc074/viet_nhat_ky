@@ -23,6 +23,10 @@ npm run dev
 
 Mở [http://localhost:3001](http://localhost:3001) trong trình duyệt.
 
+## Production URL
+
+🚀 **Admin Dashboard**: [https://viet-nhat-ky-cbz2.vercel.app/](https://viet-nhat-ky-cbz2.vercel.app/)
+
 ## Biến môi trường
 
 Tạo file `.env.local`:

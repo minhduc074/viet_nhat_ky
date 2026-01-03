@@ -37,6 +37,26 @@ viet_nhat_ky/
 │   ├── package.json
 │   └── .env
 │
+├── admin-ui/                # Admin Dashboard (Next.js)
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── context/    # Auth context
+│   │   │   ├── dashboard/  # Dashboard pages
+│   │   │   ├── login/      # Login page
+│   │   │   └── services/   # API service
+│   ├── package.json
+│   └── .env.local
+│
+├── user-ui/                 # User Web App (Next.js)
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── context/    # Auth & Entry contexts
+│   │   │   ├── app/        # Protected app pages
+│   │   │   ├── login/      # Login page
+│   │   │   └── register/   # Register page
+│   ├── package.json
+│   └── .env.local
+│
 └── mobile/                  # Flutter App
     └── lib/
         ├── config/
@@ -94,6 +114,28 @@ npm run dev
 ```
 
 Server sẽ chạy tại: http://localhost:3000
+
+### Admin UI (Next.js)
+
+```bash
+cd admin-ui
+npm install
+npm run dev
+```
+
+- Development: http://localhost:3001
+- 🚀 Production: https://viet-nhat-ky-cbz2.vercel.app/
+
+### User UI (Next.js)
+
+```bash
+cd user-ui
+npm install
+npm run dev
+```
+
+- Development: http://localhost:3002
+- 🚀 Production: https://viet-nhat-ky-sw6o.vercel.app/
 
 ### Mobile (Flutter)
 

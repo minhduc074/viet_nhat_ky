@@ -24,6 +24,10 @@ npm run dev
 
 Mở [http://localhost:3002](http://localhost:3002) trong trình duyệt.
 
+## Production URL
+
+🚀 **User App**: [https://viet-nhat-ky-sw6o.vercel.app/](https://viet-nhat-ky-sw6o.vercel.app/)
+
 ## Biến môi trường
 
 Tạo file `.env.local`:
