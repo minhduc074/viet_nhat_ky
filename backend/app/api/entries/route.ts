@@ -45,11 +45,11 @@ export async function POST(request: Request) {
     if (!userId) return errorResponse('Unauthorized', 401);
     
     const body = await getRequestBody(request);
-    if (!body || !body.content || !body.moodScore || !body.date) {
-      return errorResponse('Content, moodScore và date là bắt buộc');
+    if (!body || !body.note || !body.moodScore || !body.date) {
+      return errorResponse('Note, moodScore và date là bắt buộc');
     }
     
-    const { content, moodScore, tags, date } = body;
+    const { note, moodScore, tags, date } = body;
     
     // Validate moodScore
     if (moodScore < 1 || moodScore > 5) {
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       entry = await prisma.dailyEntry.update({
         where: { id: existingEntry.id },
         data: {
-          content,
+          note,
           moodScore,
           tags: tags || []
         }
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       entry = await prisma.dailyEntry.create({
         data: {
           userId,
-          content,
+          note,
           moodScore,
           tags: tags || [],
           date: entryDate
