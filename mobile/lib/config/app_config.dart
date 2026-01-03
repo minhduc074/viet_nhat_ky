@@ -3,7 +3,7 @@ class AppConfig {
   // API Base URL - Đổi thành địa chỉ server của bạn
   // static const String baseUrl = 'http://10.0.2.2:3000'; // Android Emulator
   // static const String baseUrl = 'http://localhost:3000'; // iOS Simulator
-  static const String baseUrl = 'http://localhost:3000'; // TODO: Change to your server IP
+  static const String baseUrl = 'https://viet-nhat-ky.vercel.app/'; // TODO: Change to your server IP
   
   // API Endpoints
   static const String apiVersion = '/api';

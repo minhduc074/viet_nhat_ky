@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
 const config = require('./config');
 const prisma = require('./config/prisma');
 const { authRoutes, entryRoutes, statsRoutes } = require('./routes');
@@ -13,6 +15,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Swagger Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Viết Nhật Ký API Docs',
+}));
+
 // Routes
 app.get('/', (req, res) => {
   res.json({
@@ -22,7 +30,8 @@ app.get('/', (req, res) => {
     endpoints: {
       auth: '/api/auth',
       entries: '/api/entries',
-      stats: '/api/stats'
+      stats: '/api/stats',
+      docs: '/api-docs'
     }
   });
 });
