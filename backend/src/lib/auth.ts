@@ -1,8 +1,8 @@
-import jwt from 'jsonwebtoken';
+import jwt, { Secret } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key';
-const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '7d';
+const JWT_SECRET: Secret = process.env.JWT_SECRET || 'fallback-secret-key';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 export interface JwtPayload {
   userId: string;
@@ -11,7 +11,8 @@ export interface JwtPayload {
 
 // Generate JWT token
 export function generateToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+  return jwt.sign(payload, JWT_SECRET, { expiresIn } as any);
 }
 
 // Verify JWT token
