@@ -4,10 +4,10 @@ class AppConfig {
   // For Android Emulator use: 10.0.2.2 instead of localhost
   // For iOS Simulator use: localhost
   // For physical device: use your computer's IP address
-  static const String baseUrl = 'http://10.0.2.2:3000/api';
+  // static const String baseUrl = 'http://10.0.2.2:3000/api';
   
   // For production
-  // static const String baseUrl = 'https://your-domain.com/api';
+  static const String baseUrl = 'https://viet-nhat-ky.vercel.app/api';
   
   // Timeout settings
   static const Duration connectionTimeout = Duration(seconds: 30);
