@@ -14,52 +14,69 @@ class MoodSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: MoodConfig.moods.map((mood) {
-        final isSelected = selectedMood == mood.score;
-        return GestureDetector(
-          onTap: () => onMoodSelected(mood.score),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? Color(mood.color).withValues(alpha: 0.2)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
-              border: isSelected
-                  ? Border.all(color: Color(mood.color), width: 2)
-                  : null,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedScale(
-                  scale: isSelected ? 1.2 : 1.0,
-                  duration: const Duration(milliseconds: 200),
-                  child: Text(
-                    mood.emoji,
-                    style: const TextStyle(fontSize: 40),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: MoodConfig.moods.map((mood) {
+          final isSelected = selectedMood == mood.score;
+          return GestureDetector(
+            onTap: () => onMoodSelected(mood.score),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutBack,
+              margin: const EdgeInsets.symmetric(horizontal: 6),
+              padding: EdgeInsets.all(isSelected ? 12 : 8),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Color(mood.color).withValues(alpha: 0.15)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+                border: isSelected
+                    ? Border.all(color: Color(mood.color), width: 2)
+                    : Border.all(color: Colors.transparent, width: 2),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: Color(mood.color).withValues(alpha: 0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        )
+                      ]
+                    : [],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedScale(
+                    scale: isSelected ? 1.2 : 1.0,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.elasticOut,
+                    child: Text(
+                      mood.emoji,
+                      style: const TextStyle(fontSize: 36),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  mood.label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight:
-                        isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected
-                        ? Color(mood.color)
-                        : AppTheme.textSecondary,
+                  const SizedBox(height: 8),
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 200),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected
+                          ? Color(mood.color)
+                          : AppTheme.textSecondary,
+                      fontFamily: 'Nunito', // Ensure font consistency
+                    ),
+                    child: Text(mood.label),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 }

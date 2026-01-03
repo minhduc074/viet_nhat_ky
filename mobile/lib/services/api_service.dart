@@ -118,4 +118,9 @@ class ApiService {
       throw ApiException('Không thể kết nối đến server');
     }
   }
+
+  // Get monthly AI insights
+  Future<Map<String, dynamic>> getMonthlyInsights(String month) async {
+    return get('/insights/monthly', queryParams: {'month': month});
+  }
 }

@@ -51,11 +51,16 @@ class EntryCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          DateFormat('EEEE, d MMMM', 'vi').format(entry.date),
-                          style: Theme.of(context).textTheme.titleMedium,
+                        Expanded(
+                          child: Text(
+                            DateFormat('EEEE, d MMMM', 'vi').format(entry.date),
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        const Spacer(),
+                        const SizedBox(width: 8),
                         MoodBadge(moodScore: entry.moodScore),
                       ],
                     ),
