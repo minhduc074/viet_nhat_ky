@@ -6,8 +6,6 @@ import 'swagger-ui-react/swagger-ui.css';
 
 const SwaggerUI = dynamic(() => import('swagger-ui-react'), { ssr: false }) as any;
 
-export const dynamic = 'force-dynamic';
-
 const swaggerSpec = {
   openapi: '3.0.0',
   info: {
