@@ -40,15 +40,20 @@ class _MonthlyInsightsScreenState extends State<MonthlyInsightsScreen> {
       final monthString = DateFormat('yyyy-MM').format(_selectedMonth);
       final response = await ApiService().getMonthlyInsights(monthString);
 
+      print('API Response: $response'); // Debug log
+
       if (response['success'] == true && response['data'] != null) {
+        final data = response['data'] as Map<String, dynamic>;
         setState(() {
-          _insight = MonthlyInsight.fromJson(response['data']);
+          _insight = MonthlyInsight.fromJson(data);
           _isLoading = false;
         });
       } else {
         throw Exception(response['error'] ?? 'Không thể tải báo cáo');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('Error loading insights: $e');
+      print('Stack trace: $stackTrace');
       setState(() {
         _errorMessage = e.toString();
         _isLoading = false;

@@ -25,20 +25,25 @@ class MonthlyInsight {
 
 class InsightStats {
   final double avgMood;
-  final Map<String, int> moodDistribution;
+  final Map<String, int>? moodDistribution;
 
   InsightStats({
     required this.avgMood,
-    required this.moodDistribution,
+    this.moodDistribution,
   });
 
   factory InsightStats.fromJson(Map<String, dynamic> json) {
-    final distribution = json['moodDistribution'] as Map<String, dynamic>;
+    Map<String, int>? distribution;
+    if (json['moodDistribution'] != null) {
+      final distMap = json['moodDistribution'] as Map<String, dynamic>;
+      distribution = distMap.map(
+        (key, value) => MapEntry(key, value as int),
+      );
+    }
+    
     return InsightStats(
       avgMood: (json['avgMood'] as num).toDouble(),
-      moodDistribution: distribution.map(
-        (key, value) => MapEntry(key, value as int),
-      ),
+      moodDistribution: distribution,
     );
   }
 }

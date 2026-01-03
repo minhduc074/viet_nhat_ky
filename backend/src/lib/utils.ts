@@ -10,7 +10,29 @@ export async function authenticateRequest(request: NextRequest): Promise<JwtPayl
     return null;
   }
   
-  return verifyToken(token);
+  const payload = verifyToken(token);
+  if (!payload) {
+    return null;
+  }
+  
+  // Verify user still exists in database
+  try {
+    const prisma = (await import('./prisma')).default;
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true },
+    });
+    
+    if (!user) {
+      console.warn(`User ${payload.userId} from token not found in database`);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error verifying user existence:', error);
+    return null;
+  }
+  
+  return payload;
 }
 
 // Create JSON response helper

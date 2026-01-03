@@ -125,8 +125,14 @@ export async function POST(request: NextRequest) {
     });
 
     return successResponse({ entry }, 'Đã lưu cảm xúc của bạn');
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create entry error:', error);
+    
+    // Handle specific Prisma errors
+    if (error.code === 'P2003') {
+      return errorResponse('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại', 401);
+    }
+    
     return errorResponse('Đã xảy ra lỗi khi lưu', 500);
   }
 }

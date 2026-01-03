@@ -6,6 +6,9 @@ import '../../config/app_config.dart';
 import '../../config/theme.dart';
 import '../../providers/entry_provider.dart';
 import '../../widgets/common_widgets.dart';
+import '../../models/monthly_insight.dart';
+import '../../services/api_service.dart';
+import '../../providers/auth_provider.dart';
 
 class StatsTab extends StatefulWidget {
   const StatsTab({super.key});
@@ -16,6 +19,8 @@ class StatsTab extends StatefulWidget {
 
 class _StatsTabState extends State<StatsTab> {
   DateTime _selectedMonth = DateTime.now();
+  MonthlyInsight? _monthlyInsight;
+  bool _isLoadingInsight = false;
 
   @override
   void initState() {
@@ -30,12 +35,45 @@ class _StatsTabState extends State<StatsTab> {
     context.read<EntryProvider>().loadStats(month: monthStr);
   }
 
+  Future<void> _loadMonthlyInsight() async {
+    setState(() {
+      _isLoadingInsight = true;
+    });
+
+    try {
+      final authProvider = context.read<AuthProvider>();
+      if (!authProvider.isAuthenticated) return;
+
+      final monthString = DateFormat('yyyy-MM').format(_selectedMonth);
+      final response = await ApiService().getMonthlyInsights(monthString);
+
+      if (response['success'] == true && response['data'] != null) {
+        final data = response['data'] as Map<String, dynamic>;
+        setState(() {
+          _monthlyInsight = MonthlyInsight.fromJson(data);
+          _isLoadingInsight = false;
+        });
+      } else {
+        setState(() {
+          _isLoadingInsight = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading monthly insight: $e');
+      setState(() {
+        _isLoadingInsight = false;
+      });
+    }
+  }
+
   void _changeMonth(int delta) {
     setState(() {
       _selectedMonth = DateTime(
         _selectedMonth.year,
         _selectedMonth.month + delta,
       );
+      _monthlyInsight = null;
+      _isLoadingInsight = false;
     });
     _loadStats();
   }
@@ -57,10 +95,10 @@ class _StatsTabState extends State<StatsTab> {
 
               if (stats == null)
                 const LoadingWidget(message: 'Đang tải thống kê...')
-              else ...[
+                else ...[
                 // Overview cards
                 _buildOverviewCards(context, stats.totalEntries,
-                    stats.averageMood, stats.currentStreak),
+                  stats.averageMood, stats.currentStreak),
                 const SizedBox(height: 24),
 
                 // Mood distribution chart
@@ -69,12 +107,131 @@ class _StatsTabState extends State<StatsTab> {
 
                 // Top tags
                 if (stats.topTags.isNotEmpty) _buildTopTags(context, stats),
+                const SizedBox(height: 24),
+
+                // AI Insights Button
+                Center(
+                  child: ElevatedButton.icon(
+                  onPressed: _monthlyInsight == null && !_isLoadingInsight
+                    ? _loadMonthlyInsight
+                    : null,
+                  icon: const Icon(Icons.psychology),
+                  label: const Text('Xem phân tích cho tháng này'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                    ),
+                  ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Hint card: chỉ hướng dẫn người dùng nhấn nút để hiển thị phân tích AI
+                if (!_isLoadingInsight && _monthlyInsight == null)
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Center(
+                        child: Text(
+                          'Nhấn nút "Xem phân tích cho tháng này" để tạo phân tích AI.',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: AppTheme.textSecondary,
+                              ),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (_monthlyInsight != null || _isLoadingInsight)
+                  _buildAIInsights(context),
+                
                 const SizedBox(height: 100),
               ],
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildAIInsights(BuildContext context) {
+    if (_isLoadingInsight) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                'Đang tạo phân tích AI...',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppTheme.textSecondary,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_monthlyInsight == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.primaryColor.withValues(alpha: 0.05),
+              Colors.white,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.psychology,
+                    color: AppTheme.primaryColor,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Phân tích từ AI',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _monthlyInsight!.insight,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    height: 1.6,
+                    color: AppTheme.textPrimary,
+                  ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
