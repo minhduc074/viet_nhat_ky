@@ -1,185 +1,146 @@
 import 'package:flutter/material.dart';
-import '../models/index.dart';
-import '../services/index.dart';
+import 'package:intl/intl.dart';
+import '../models/daily_entry.dart';
+import '../models/mood_stats.dart';
+import '../services/entry_service.dart';
 
-/// Provider quản lý Daily Entries
-class EntryProvider with ChangeNotifier {
+enum EntryState { initial, loading, loaded, error }
+
+class EntryProvider extends ChangeNotifier {
   final EntryService _entryService = EntryService();
 
+  EntryState _state = EntryState.initial;
   DailyEntry? _todayEntry;
-  List<DailyEntry> _monthEntries = [];
-  bool _isLoading = false;
-  bool _isSaving = false;
-  String? _error;
-  int? _currentYear;
-  int? _currentMonth;
+  List<DailyEntry> _entries = [];
+  Map<DateTime, DailyEntry> _calendarEntries = {};
+  MoodStats? _stats;
+  String? _errorMessage;
+  DateTime _selectedMonth = DateTime.now();
 
-  // Getters
+  EntryState get state => _state;
   DailyEntry? get todayEntry => _todayEntry;
-  List<DailyEntry> get monthEntries => _monthEntries;
-  bool get isLoading => _isLoading;
-  bool get isSaving => _isSaving;
-  // API getTodayEntry chỉ trả về entry nếu hôm nay có
-  // Nên chỉ cần kiểm tra _todayEntry != null
+  List<DailyEntry> get entries => _entries;
+  Map<DateTime, DailyEntry> get calendarEntries => _calendarEntries;
+  MoodStats? get stats => _stats;
+  String? get errorMessage => _errorMessage;
+  DateTime get selectedMonth => _selectedMonth;
   bool get hasEntryToday => _todayEntry != null;
-  String? get error => _error;
 
-  /// Lấy entry hôm nay
-  Future<void> fetchTodayEntry() async {
-    _isLoading = true;
-    _error = null;
+  // Load today's entry
+  Future<void> loadTodayEntry() async {
+    _state = EntryState.loading;
     notifyListeners();
 
     try {
-      final result = await _entryService.getTodayEntry();
-      
-      debugPrint('fetchTodayEntry - success: ${result.success}, hasEntry: ${result.hasEntry}, entry: ${result.entry}');
-      
-      if (result.success) {
-        _todayEntry = result.entry;
-        debugPrint('_todayEntry set to: $_todayEntry');
-      } else {
-        _error = result.message;
-      }
+      _todayEntry = await _entryService.getTodayEntry();
+      _state = EntryState.loaded;
     } catch (e) {
-      _error = e.toString();
+      _state = EntryState.error;
+      _errorMessage = e.toString();
     }
-
-    _isLoading = false;
     notifyListeners();
   }
 
-  /// Tạo hoặc cập nhật entry hôm nay
+  // Save entry (create or update)
   Future<bool> saveEntry({
     required int moodScore,
     String? note,
     List<String>? tags,
+    String? date,
   }) async {
-    _isSaving = true;
-    _error = null;
+    _state = EntryState.loading;
+    _errorMessage = null;
     notifyListeners();
 
     try {
-      final result = await _entryService.createOrUpdate(
+      final request = CreateEntryRequest(
         moodScore: moodScore,
         note: note,
         tags: tags,
+        date: date,
       );
 
-      if (result.success && result.entry != null) {
-        _todayEntry = result.entry;
-        debugPrint('saveEntry success - _todayEntry set to: $_todayEntry');
-        debugPrint('hasEntryToday now: $hasEntryToday');
-        
-        // Cập nhật trong monthEntries nếu đang xem tháng hiện tại
-        final now = DateTime.now();
-        if (_currentYear == now.year && _currentMonth == now.month) {
-          final entryDate = result.entry!.date;
-          final index = _monthEntries.indexWhere(
-            (e) => e.date.year == entryDate.year &&
-                   e.date.month == entryDate.month &&
-                   e.date.day == entryDate.day,
-          );
-          if (index >= 0) {
-            _monthEntries[index] = result.entry!;
-          } else {
-            _monthEntries.insert(0, result.entry!);
-          }
-        }
-        
-        _isSaving = false;
-        notifyListeners();
-        return true;
+      final entry = await _entryService.saveEntry(request);
+      
+      // If saving for today, update today's entry
+      final today = DateTime.now();
+      if (date == null || date == DateFormat('yyyy-MM-dd').format(today)) {
+        _todayEntry = entry;
       }
 
-      _error = result.message;
-      _isSaving = false;
+      // Update calendar entries
+      final dateKey = DateTime(entry.date.year, entry.date.month, entry.date.day);
+      _calendarEntries[dateKey] = entry;
+
+      // Reload stats to reflect the new entry
+      await loadStats();
+
+      _state = EntryState.loaded;
       notifyListeners();
-      return false;
+      return true;
     } catch (e) {
-      _error = e.toString();
-      _isSaving = false;
+      _state = EntryState.error;
+      _errorMessage = e.toString();
       notifyListeners();
       return false;
     }
   }
 
-  /// Lấy entries theo tháng
-  Future<void> fetchEntriesByMonth({int? year, int? month}) async {
-    final now = DateTime.now();
-    _currentYear = year ?? now.year;
-    _currentMonth = month ?? now.month;
+  // Load entries for calendar
+  Future<void> loadEntriesForMonth(DateTime month) async {
+    _selectedMonth = month;
     
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
     try {
-      final result = await _entryService.getEntriesByMonth(
-        year: _currentYear,
-        month: _currentMonth,
-      );
-
-      if (result.success) {
-        _monthEntries = result.entries;
-      } else {
-        _error = result.message;
-      }
-    } catch (e) {
-      _error = e.toString();
-    }
-
-    _isLoading = false;
-    notifyListeners();
-  }
-
-  /// Lấy entry của một ngày cụ thể từ monthEntries
-  DailyEntry? getEntryForDate(DateTime date) {
-    try {
-      return _monthEntries.firstWhere(
-        (e) => e.date.year == date.year &&
-               e.date.month == date.month &&
-               e.date.day == date.day,
-      );
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /// Xóa entry
-  Future<bool> deleteEntry(String entryId) async {
-    try {
-      final success = await _entryService.deleteEntry(entryId);
-      
-      if (success) {
-        if (_todayEntry?.id == entryId) {
-          _todayEntry = null;
-        }
-        _monthEntries.removeWhere((e) => e.id == entryId);
-        notifyListeners();
-      }
-      
-      return success;
-    } catch (e) {
-      _error = e.toString();
+      _calendarEntries = await _entryService.getEntriesForMonth(month);
       notifyListeners();
-      return false;
+    } catch (e) {
+      _errorMessage = e.toString();
     }
   }
 
-  /// Clear error
-  void clearError() {
-    _error = null;
+  // Load recent entries
+  Future<void> loadEntries({int limit = 30}) async {
+    _state = EntryState.loading;
+    notifyListeners();
+
+    try {
+      _entries = await _entryService.getEntries(limit: limit);
+      _state = EntryState.loaded;
+    } catch (e) {
+      _state = EntryState.error;
+      _errorMessage = e.toString();
+    }
     notifyListeners();
   }
 
-  /// Reset state khi logout
-  void reset() {
-    _todayEntry = null;
-    _monthEntries = [];
-    _error = null;
-    _currentYear = null;
-    _currentMonth = null;
+  // Load statistics
+  Future<void> loadStats({String? month, String? year}) async {
+    try {
+      _stats = await _entryService.getStats(month: month, year: year);
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+    }
+  }
+
+  // Refresh all data
+  Future<void> refreshAll() async {
+    await Future.wait([
+      loadTodayEntry(),
+      loadEntriesForMonth(_selectedMonth),
+      loadStats(),
+    ]);
+  }
+
+  // Clear error
+  void clearError() {
+    _errorMessage = null;
     notifyListeners();
+  }
+
+  // Get entry for a specific date
+  DailyEntry? getEntryForDate(DateTime date) {
+    final dateKey = DateTime(date.year, date.month, date.day);
+    return _calendarEntries[dateKey];
   }
 }

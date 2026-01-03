@@ -3,6 +3,25 @@
 .env.local
 .env.*.local
 
+# Backend specific
+backend/.env
+backend/.next/
+backend/node_modules/
+backend/.vercel
+
+# Mobile specific
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/build/
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/android/.gradle/
+mobile/android/app/debug/
+mobile/android/app/profile/
+mobile/android/app/release/
+
 # OS files
 .DS_Store
 Thumbs.db

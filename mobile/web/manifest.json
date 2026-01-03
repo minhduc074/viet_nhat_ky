@@ -1,6 +1,6 @@
 {
-    "name": "viet_nhat_ky",
-    "short_name": "viet_nhat_ky",
+    "name": "mobile",
+    "short_name": "mobile",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

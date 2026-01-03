@@ -1,48 +1,40 @@
 name: viet_nhat_ky
-description: Ứng dụng Micro-journaling - Ghi lại cảm xúc mỗi ngày
-
+description: "Ứng dụng Micro-journaling theo dõi cảm xúc hàng ngày"
 publish_to: 'none'
-
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ^3.10.0-290.4.beta
 
 dependencies:
   flutter:
     sdk: flutter
-
-  # Core
-  cupertino_icons: ^1.0.6
-  
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
   # State Management
   provider: ^6.1.1
-  
-  # HTTP & API
-  http: ^1.1.2
-  
+  # HTTP Client
+  http: ^1.2.0
   # Local Storage
   shared_preferences: ^2.2.2
-  
-  # UI Components
-  flutter_svg: ^2.0.9
+  # Calendar Widget
   table_calendar: ^3.0.9
-  fl_chart: ^0.66.0
-  
-  # Utilities
-  intl: ^0.19.0
-  
-  # Animations
-  flutter_animate: ^4.3.0
+  # Charts
+  fl_chart: ^0.66.2
+  # SVG Icons
+  flutter_svg: ^2.0.9
+  # Date formatting
+  intl: ^0.20.2
+  # Google Fonts
+  google_fonts: ^6.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.1
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
-  
   assets:
-    - assets/images/
     - assets/icons/

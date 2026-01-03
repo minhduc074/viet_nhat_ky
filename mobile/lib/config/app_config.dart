@@ -1,33 +1,88 @@
-/// Cấu hình ứng dụng
+// API Configuration
 class AppConfig {
-  // API Base URL - Đổi thành địa chỉ server của bạn
-  // static const String baseUrl = 'http://10.0.2.2:3000'; // Android Emulator
-  // static const String baseUrl = 'http://localhost:3000'; // iOS Simulator
-  static const String baseUrl = 'https://viet-nhat-ky.vercel.app/'; // TODO: Change to your server IP
+  // Change this to your backend URL
+  // For Android Emulator use: 10.0.2.2 instead of localhost
+  // For iOS Simulator use: localhost
+  // For physical device: use your computer's IP address
+  static const String baseUrl = 'http://10.0.2.2:3000/api';
   
-  // API Endpoints
-  static const String apiVersion = '/api';
+  // For production
+  // static const String baseUrl = 'https://your-domain.com/api';
   
-  // Auth
-  static const String loginEndpoint = '$apiVersion/auth/login';
-  static const String registerEndpoint = '$apiVersion/auth/register';
-  static const String meEndpoint = '$apiVersion/auth/me';
-  
-  // Entries
-  static const String entriesEndpoint = '$apiVersion/entries';
-  static const String todayEntryEndpoint = '$apiVersion/entries/today';
-  
-  // Stats
-  static const String statsMonthlyEndpoint = '$apiVersion/stats/monthly';
-  static const String statsWeeklyEndpoint = '$apiVersion/stats/weekly';
-  static const String statsStreakEndpoint = '$apiVersion/stats/streak';
-  static const String statsOverviewEndpoint = '$apiVersion/stats/overview';
-  
-  // Storage Keys
-  static const String tokenKey = 'auth_token';
-  static const String userKey = 'user_data';
-  
-  // App Info
-  static const String appName = 'Viết Nhật Ký';
-  static const String appVersion = '1.0.0';
+  // Timeout settings
+  static const Duration connectionTimeout = Duration(seconds: 30);
+  static const Duration receiveTimeout = Duration(seconds: 30);
+}
+
+// Mood configuration
+class MoodConfig {
+  static const List<MoodItem> moods = [
+    MoodItem(
+      score: 1,
+      label: 'Tệ',
+      emoji: '😢',
+      color: 0xFFE53935,
+    ),
+    MoodItem(
+      score: 2,
+      label: 'Không tốt',
+      emoji: '😔',
+      color: 0xFFFF7043,
+    ),
+    MoodItem(
+      score: 3,
+      label: 'Bình thường',
+      emoji: '😐',
+      color: 0xFFFFCA28,
+    ),
+    MoodItem(
+      score: 4,
+      label: 'Tốt',
+      emoji: '😊',
+      color: 0xFF66BB6A,
+    ),
+    MoodItem(
+      score: 5,
+      label: 'Tuyệt vời',
+      emoji: '🤩',
+      color: 0xFF42A5F5,
+    ),
+  ];
+
+  static MoodItem getMood(int score) {
+    return moods.firstWhere(
+      (m) => m.score == score,
+      orElse: () => moods[2],
+    );
+  }
+}
+
+class MoodItem {
+  final int score;
+  final String label;
+  final String emoji;
+  final int color;
+
+  const MoodItem({
+    required this.score,
+    required this.label,
+    required this.emoji,
+    required this.color,
+  });
+}
+
+// Available tags for mood entries
+class TagConfig {
+  static const List<String> availableTags = [
+    'Công việc',
+    'Gia đình',
+    'Bạn bè',
+    'Sức khỏe',
+    'Thể thao',
+    'Học tập',
+    'Giải trí',
+    'Tình yêu',
+    'Tài chính',
+    'Du lịch',
+  ];
 }

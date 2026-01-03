@@ -1,67 +1,61 @@
 import 'package:flutter/material.dart';
-import '../../config/app_theme.dart';
+import '../config/app_config.dart';
+import '../config/theme.dart';
 
-/// Widget chọn tags
 class TagSelector extends StatelessWidget {
-  final List<String> availableTags;
   final List<String> selectedTags;
-  final Function(String) onTagToggle;
-  final int maxTags;
+  final ValueChanged<List<String>> onTagsChanged;
+  final List<String> availableTags;
 
   const TagSelector({
     super.key,
-    required this.availableTags,
     required this.selectedTags,
-    required this.onTagToggle,
-    this.maxTags = 5,
+    required this.onTagsChanged,
+    this.availableTags = const [],
   });
+
+  List<String> get _tags =>
+      availableTags.isEmpty ? TagConfig.availableTags : availableTags;
+
+  void _toggleTag(String tag) {
+    final newTags = List<String>.from(selectedTags);
+    if (newTags.contains(tag)) {
+      newTags.remove(tag);
+    } else {
+      newTags.add(tag);
+    }
+    onTagsChanged(newTags);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: availableTags.map((tag) {
+      spacing: 8,
+      runSpacing: 8,
+      children: _tags.map((tag) {
         final isSelected = selectedTags.contains(tag);
-        final canSelect = isSelected || selectedTags.length < maxTags;
-        
         return GestureDetector(
-          onTap: canSelect ? () => onTagToggle(tag) : null,
+          onTap: () => _toggleTag(tag),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 10,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: isSelected 
-                  ? AppTheme.primaryColor 
-                  : Colors.white,
-              borderRadius: BorderRadius.circular(24),
+              color: isSelected
+                  ? AppTheme.primaryColor.withValues(alpha: 0.15)
+                  : Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isSelected 
-                    ? AppTheme.primaryColor 
-                    : Colors.grey.shade300,
-                width: 1.5,
+                color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300,
+                width: isSelected ? 2 : 1,
               ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: AppTheme.primaryColor.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      )
-                    ]
-                  : [],
             ),
             child: Text(
               tag,
               style: TextStyle(
+                color:
+                    isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 fontSize: 14,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected 
-                    ? Colors.white 
-                    : (canSelect ? AppTheme.textPrimary : AppTheme.textLight),
               ),
             ),
           ),

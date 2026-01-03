@@ -1,4 +1,3 @@
-/// Model DailyEntry - Ghi nhận cảm xúc hàng ngày
 class DailyEntry {
   final String id;
   final String userId;
@@ -6,8 +5,8 @@ class DailyEntry {
   final int moodScore;
   final String? note;
   final List<String> tags;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   DailyEntry({
     required this.id,
@@ -16,25 +15,24 @@ class DailyEntry {
     required this.moodScore,
     this.note,
     this.tags = const [],
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
   });
 
   factory DailyEntry.fromJson(Map<String, dynamic> json) {
-    // Parse dates and convert to local timezone (UTC+7)
-    final parsedDate = DateTime.parse(json['date']).toLocal();
-    final parsedCreatedAt = DateTime.parse(json['createdAt']).toLocal();
-    final parsedUpdatedAt = DateTime.parse(json['updatedAt']).toLocal();
-    
     return DailyEntry(
-      id: json['_id'] ?? json['id'],
-      userId: json['userId'],
-      date: parsedDate,
-      moodScore: json['moodScore'],
-      note: json['note'],
-      tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
-      createdAt: parsedCreatedAt,
-      updatedAt: parsedUpdatedAt,
+      id: json['id'] as String,
+      userId: json['userId'] as String,
+      date: DateTime.parse(json['date'] as String),
+      moodScore: json['moodScore'] as int,
+      note: json['note'] as String?,
+      tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? [],
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : null,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
+          : null,
     );
   }
 
@@ -46,44 +44,53 @@ class DailyEntry {
       'moodScore': moodScore,
       'note': note,
       'tags': tags,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
     };
   }
 
-  /// Lấy label theo mood score
-  String get moodLabel {
-    switch (moodScore) {
-      case 1:
-        return 'Rất tệ';
-      case 2:
-        return 'Tệ';
-      case 3:
-        return 'Bình thường';
-      case 4:
-        return 'Tốt';
-      case 5:
-        return 'Tuyệt vời';
-      default:
-        return 'Không xác định';
-    }
+  DailyEntry copyWith({
+    String? id,
+    String? userId,
+    DateTime? date,
+    int? moodScore,
+    String? note,
+    List<String>? tags,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return DailyEntry(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      date: date ?? this.date,
+      moodScore: moodScore ?? this.moodScore,
+      note: note ?? this.note,
+      tags: tags ?? this.tags,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
   }
+}
 
-  /// Lấy emoji theo mood score
-  String get moodEmoji {
-    switch (moodScore) {
-      case 1:
-        return '😢';
-      case 2:
-        return '😔';
-      case 3:
-        return '😐';
-      case 4:
-        return '😊';
-      case 5:
-        return '😄';
-      default:
-        return '❓';
-    }
+class CreateEntryRequest {
+  final int moodScore;
+  final String? note;
+  final List<String>? tags;
+  final String? date;
+
+  CreateEntryRequest({
+    required this.moodScore,
+    this.note,
+    this.tags,
+    this.date,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'moodScore': moodScore,
+      if (note != null) 'note': note,
+      if (tags != null) 'tags': tags,
+      if (date != null) 'date': date,
+    };
   }
 }

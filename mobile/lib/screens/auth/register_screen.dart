@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../config/app_theme.dart';
+import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
+import '../main/main_screen.dart';
 
-/// Màn hình đăng ký
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -32,24 +32,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+    final authProvider = context.read<AuthProvider>();
     final success = await authProvider.register(
       email: _emailController.text.trim(),
       password: _passwordController.text,
-      name: _nameController.text.trim().isNotEmpty 
-          ? _nameController.text.trim() 
+      name: _nameController.text.trim().isNotEmpty
+          ? _nameController.text.trim()
           : null,
     );
 
     if (!mounted) return;
 
     if (success) {
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const MainScreen()),
+        (route) => false,
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.error ?? 'Đăng ký thất bại'),
+          content: Text(authProvider.errorMessage ?? 'Đăng ký thất bại'),
           backgroundColor: AppTheme.errorColor,
         ),
       );
@@ -58,14 +60,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+        title: const Text('Đăng ký'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -76,44 +73,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 20),
-                
-                // Title
-                const Text(
-                  'Tạo tài khoản',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
+                // Header
+                Text(
+                  'Tạo tài khoản mới',
+                  style: Theme.of(context).textTheme.displayMedium,
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Bắt đầu hành trình ghi lại cảm xúc của bạn',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppTheme.textSecondary,
-                  ),
+                Text(
+                  'Bắt đầu hành trình ghi lại cảm xúc',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
                 ),
-                
-                const SizedBox(height: 32),
-                
+                const SizedBox(height: 40),
+
                 // Name field (optional)
                 TextFormField(
                   controller: _nameController,
+                  textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(
-                    labelText: 'Tên hiển thị (không bắt buộc)',
-                    prefixIcon: Icon(Icons.person_outline),
+                    labelText: 'Tên của bạn (không bắt buộc)',
+                    hintText: 'Nhập tên của bạn',
+                    prefixIcon: Icon(Icons.person_outlined),
                   ),
                 ),
-                
                 const SizedBox(height: 16),
-                
+
                 // Email field
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
                     labelText: 'Email',
+                    hintText: 'example@email.com',
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
                   validator: (value) {
@@ -126,21 +118,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                
                 const SizedBox(height: 16),
-                
+
                 // Password field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: 'Mật khẩu',
-                    prefixIcon: const Icon(Icons.lock_outline),
+                    hintText: 'Ít nhất 6 ký tự',
+                    prefixIcon: const Icon(Icons.lock_outlined),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword 
-                          ? Icons.visibility_off 
-                          : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
                       ),
                       onPressed: () {
                         setState(() {
@@ -159,21 +151,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                
                 const SizedBox(height: 16),
-                
-                // Confirm password field
+
+                // Confirm Password field
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
                   decoration: InputDecoration(
                     labelText: 'Xác nhận mật khẩu',
-                    prefixIcon: const Icon(Icons.lock_outline),
+                    hintText: 'Nhập lại mật khẩu',
+                    prefixIcon: const Icon(Icons.lock_outlined),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureConfirmPassword 
-                          ? Icons.visibility_off 
-                          : Icons.visibility,
+                        _obscureConfirmPassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
                       ),
                       onPressed: () {
                         setState(() {
@@ -192,40 +184,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                
                 const SizedBox(height: 32),
-                
+
                 // Register button
-                SizedBox(
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: authProvider.isLoading ? null : _handleRegister,
-                    child: authProvider.isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Text('Đăng ký'),
-                  ),
+                Consumer<AuthProvider>(
+                  builder: (context, auth, child) {
+                    return ElevatedButton(
+                      onPressed: auth.state == AuthState.loading
+                          ? null
+                          : _handleRegister,
+                      child: auth.state == AuthState.loading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Đăng ký'),
+                    );
+                  },
                 ),
-                
-                const SizedBox(height: 16),
-                
+                const SizedBox(height: 24),
+
                 // Login link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Đã có tài khoản? ',
-                      style: TextStyle(color: AppTheme.textSecondary),
-                    ),
+                    const Text('Đã có tài khoản? '),
                     TextButton(
                       onPressed: () {
-                        Navigator.pop(context);
+                        Navigator.of(context).pop();
                       },
                       child: const Text('Đăng nhập'),
                     ),

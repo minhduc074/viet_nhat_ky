@@ -1,132 +1,106 @@
 import 'package:flutter/material.dart';
-import '../models/index.dart';
-import '../services/index.dart';
+import '../models/user.dart';
+import '../services/auth_service.dart';
 
-/// Provider quản lý trạng thái Authentication
-class AuthProvider with ChangeNotifier {
+enum AuthState { initial, loading, authenticated, unauthenticated, error }
+
+class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
   
+  AuthState _state = AuthState.initial;
   User? _user;
-  bool _isLoading = false;
-  bool _isInitialized = false;
-  String? _error;
+  String? _errorMessage;
 
-  // Getters
+  AuthState get state => _state;
   User? get user => _user;
-  bool get isLoading => _isLoading;
-  bool get isLoggedIn => _user != null;
-  bool get isInitialized => _isInitialized;
-  String? get error => _error;
+  String? get errorMessage => _errorMessage;
+  bool get isAuthenticated => _state == AuthState.authenticated;
 
-  /// Khởi tạo - kiểm tra đã đăng nhập chưa
+  // Initialize - check if user is already logged in
   Future<void> initialize() async {
-    if (_isInitialized) return;
-    
-    _isLoading = true;
+    _state = AuthState.loading;
     notifyListeners();
 
     try {
-      final hasToken = await _authService.isLoggedIn();
-      
-      if (hasToken) {
-        final result = await _authService.getCurrentUser();
-        if (result.success && result.user != null) {
-          _user = result.user;
-        } else {
-          // Token không hợp lệ, clear
-          await _authService.logout();
-        }
+      final isLoggedIn = await _authService.initialize();
+      if (isLoggedIn) {
+        _user = _authService.currentUser;
+        _state = AuthState.authenticated;
+      } else {
+        _state = AuthState.unauthenticated;
       }
     } catch (e) {
-      _error = e.toString();
+      _state = AuthState.unauthenticated;
     }
-
-    _isLoading = false;
-    _isInitialized = true;
     notifyListeners();
   }
 
-  /// Đăng ký
+  // Register
   Future<bool> register({
     required String email,
     required String password,
     String? name,
   }) async {
-    _isLoading = true;
-    _error = null;
+    _state = AuthState.loading;
+    _errorMessage = null;
     notifyListeners();
 
     try {
-      final result = await _authService.register(
+      _user = await _authService.register(
         email: email,
         password: password,
         name: name,
       );
-
-      if (result.success && result.user != null) {
-        _user = result.user;
-        _isLoading = false;
-        notifyListeners();
-        return true;
-      }
-
-      _error = result.message;
-      _isLoading = false;
+      _state = AuthState.authenticated;
       notifyListeners();
-      return false;
+      return true;
     } catch (e) {
-      _error = e.toString();
-      _isLoading = false;
+      _state = AuthState.error;
+      _errorMessage = e.toString();
       notifyListeners();
       return false;
     }
   }
 
-  /// Đăng nhập
+  // Login
   Future<bool> login({
     required String email,
     required String password,
   }) async {
-    _isLoading = true;
-    _error = null;
+    _state = AuthState.loading;
+    _errorMessage = null;
     notifyListeners();
 
     try {
-      final result = await _authService.login(
+      _user = await _authService.login(
         email: email,
         password: password,
       );
-
-      if (result.success && result.user != null) {
-        _user = result.user;
-        _isLoading = false;
-        notifyListeners();
-        return true;
-      }
-
-      _error = result.message;
-      _isLoading = false;
+      _state = AuthState.authenticated;
       notifyListeners();
-      return false;
+      return true;
     } catch (e) {
-      _error = e.toString();
-      _isLoading = false;
+      _state = AuthState.error;
+      _errorMessage = e.toString();
       notifyListeners();
       return false;
     }
   }
 
-  /// Đăng xuất
+  // Logout
   Future<void> logout() async {
     await _authService.logout();
     _user = null;
-    _error = null;
+    _state = AuthState.unauthenticated;
     notifyListeners();
   }
 
-  /// Clear error
+  // Clear error
   void clearError() {
-    _error = null;
+    _errorMessage = null;
+    if (_state == AuthState.error) {
+      _state = AuthState.unauthenticated;
+    }
     notifyListeners();
   }
 }

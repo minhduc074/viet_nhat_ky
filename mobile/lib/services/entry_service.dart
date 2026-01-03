@@ -1,158 +1,87 @@
-import '../config/app_config.dart';
-import '../models/index.dart';
+import 'package:intl/intl.dart';
+import '../models/daily_entry.dart';
+import '../models/mood_stats.dart';
 import 'api_service.dart';
 
-/// Service xử lý Daily Entries
 class EntryService {
   final ApiService _api = ApiService();
 
-  /// Tạo hoặc cập nhật entry hôm nay
-  Future<EntryResult> createOrUpdate({
-    required int moodScore,
-    String? note,
-    List<String>? tags,
+  // Singleton pattern
+  static final EntryService _instance = EntryService._internal();
+  factory EntryService() => _instance;
+  EntryService._internal();
+
+  // Get today's entry
+  Future<DailyEntry?> getTodayEntry() async {
+    final response = await _api.get('/entries/today');
+    final data = response['data'] as Map<String, dynamic>;
+    
+    if (data['entry'] != null) {
+      return DailyEntry.fromJson(data['entry'] as Map<String, dynamic>);
+    }
+    return null;
+  }
+
+  // Check if user has entry today
+  Future<bool> hasEntryToday() async {
+    final response = await _api.get('/entries/today');
+    final data = response['data'] as Map<String, dynamic>;
+    return data['hasEntryToday'] as bool;
+  }
+
+  // Create or update entry
+  Future<DailyEntry> saveEntry(CreateEntryRequest request) async {
+    final response = await _api.post('/entries', body: request.toJson());
+    final data = response['data'] as Map<String, dynamic>;
+    return DailyEntry.fromJson(data['entry'] as Map<String, dynamic>);
+  }
+
+  // Get entries list
+  Future<List<DailyEntry>> getEntries({
+    String? month, // Format: YYYY-MM
+    String? year,
+    int limit = 30,
+    int offset = 0,
   }) async {
-    final response = await _api.post(
-      AppConfig.entriesEndpoint,
-      body: {
-        'moodScore': moodScore,
-        if (note != null) 'note': note,
-        if (tags != null) 'tags': tags,
-      },
-    );
-
-    if (response.success && response.data != null) {
-      final entry = DailyEntry.fromJson(response.data['entry']);
-      return EntryResult(success: true, entry: entry);
-    }
-
-    return EntryResult(
-      success: false,
-      message: response.message ?? 'Không thể lưu cảm xúc',
-    );
-  }
-
-  /// Lấy entry hôm nay
-  Future<EntryResult> getTodayEntry() async {
-    final response = await _api.get(AppConfig.todayEntryEndpoint);
-
-    if (response.success && response.data != null) {
-      final hasEntry = response.data['hasEntry'] ?? false;
-      DailyEntry? entry;
-      
-      if (hasEntry && response.data['entry'] != null) {
-        entry = DailyEntry.fromJson(response.data['entry']);
-      }
-      
-      return EntryResult(
-        success: true,
-        entry: entry,
-        hasEntry: hasEntry,
-      );
-    }
-
-    return EntryResult(
-      success: false,
-      message: response.message ?? 'Không thể lấy entry hôm nay',
-    );
-  }
-
-  /// Lấy danh sách entries theo tháng
-  Future<EntriesResult> getEntriesByMonth({int? year, int? month}) async {
-    final now = DateTime.now();
-    final queryParams = {
-      'year': (year ?? now.year).toString(),
-      'month': (month ?? now.month).toString(),
+    final queryParams = <String, String>{
+      'limit': limit.toString(),
+      'offset': offset.toString(),
     };
+    
+    if (month != null) queryParams['month'] = month;
+    if (year != null) queryParams['year'] = year;
 
-    final response = await _api.get(
-      AppConfig.entriesEndpoint,
-      queryParams: queryParams,
-    );
+    final response = await _api.get('/entries', queryParams: queryParams);
+    final data = response['data'] as Map<String, dynamic>;
+    final entries = data['entries'] as List<dynamic>;
+    
+    return entries
+        .map((e) => DailyEntry.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
 
-    if (response.success && response.data != null) {
-      final entries = (response.data['entries'] as List)
-          .map((e) => DailyEntry.fromJson(e))
-          .toList();
-      
-      return EntriesResult(
-        success: true,
-        entries: entries,
-        year: response.data['year'],
-        month: response.data['month'],
-      );
+  // Get entries for a specific month (for calendar)
+  Future<Map<DateTime, DailyEntry>> getEntriesForMonth(DateTime month) async {
+    final monthStr = DateFormat('yyyy-MM').format(month);
+    final entries = await getEntries(month: monthStr, limit: 31);
+    
+    final Map<DateTime, DailyEntry> entriesMap = {};
+    for (final entry in entries) {
+      final dateKey = DateTime(entry.date.year, entry.date.month, entry.date.day);
+      entriesMap[dateKey] = entry;
     }
-
-    return EntriesResult(
-      success: false,
-      message: response.message ?? 'Không thể lấy danh sách entries',
-    );
+    
+    return entriesMap;
   }
 
-  /// Lấy entries theo khoảng ngày
-  Future<EntriesResult> getEntriesByRange({
-    required DateTime startDate,
-    required DateTime endDate,
-  }) async {
-    final queryParams = {
-      'startDate': startDate.toIso8601String().split('T')[0],
-      'endDate': endDate.toIso8601String().split('T')[0],
-    };
+  // Get statistics
+  Future<MoodStats> getStats({String? month, String? year}) async {
+    final queryParams = <String, String>{};
+    if (month != null) queryParams['month'] = month;
+    if (year != null) queryParams['year'] = year;
 
-    final response = await _api.get(
-      '${AppConfig.entriesEndpoint}/range',
-      queryParams: queryParams,
-    );
-
-    if (response.success && response.data != null) {
-      final entries = (response.data['entries'] as List)
-          .map((e) => DailyEntry.fromJson(e))
-          .toList();
-      
-      return EntriesResult(success: true, entries: entries);
-    }
-
-    return EntriesResult(
-      success: false,
-      message: response.message ?? 'Không thể lấy entries',
-    );
+    final response = await _api.get('/stats', queryParams: queryParams);
+    final data = response['data'] as Map<String, dynamic>;
+    return MoodStats.fromJson(data);
   }
-
-  /// Xóa entry
-  Future<bool> deleteEntry(String entryId) async {
-    final response = await _api.delete('${AppConfig.entriesEndpoint}/$entryId');
-    return response.success;
-  }
-}
-
-/// Kết quả cho single entry
-class EntryResult {
-  final bool success;
-  final DailyEntry? entry;
-  final bool hasEntry;
-  final String? message;
-
-  EntryResult({
-    required this.success,
-    this.entry,
-    this.hasEntry = false,
-    this.message,
-  });
-}
-
-/// Kết quả cho danh sách entries
-class EntriesResult {
-  final bool success;
-  final List<DailyEntry> entries;
-  final int? year;
-  final int? month;
-  final String? message;
-
-  EntriesResult({
-    required this.success,
-    this.entries = const [],
-    this.year,
-    this.month,
-    this.message,
-  });
 }

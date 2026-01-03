@@ -1,164 +1,174 @@
-# 🌟 Viết Nhật Ký - Micro-journaling App
+# Viết Nhật Ký - Micro-journaling App
 
-Ứng dụng ghi lại cảm xúc mỗi ngày, giúp theo dõi sức khỏe tinh thần một cách đơn giản và nhanh gọn.
+Ứng dụng ghi lại cảm xúc hàng ngày với giao diện đơn giản, giúp người dùng theo dõi sức khỏe tinh thần.
 
-## 📁 Cấu trúc dự án
+## 🌟 Tính năng
+
+- ✅ Đăng nhập/Đăng ký với JWT authentication
+- ✅ Check-in cảm xúc hàng ngày (5 mức độ)
+- ✅ Ghi chú ngắn kèm theo cảm xúc
+- ✅ Tags để phân loại (Công việc, Gia đình, Thể thao...)
+- ✅ Lịch sử với Calendar view
+- ✅ Thống kê biểu đồ cảm xúc theo tháng
+- ✅ Logic: Mỗi ngày chỉ ghi 1 lần (có thể sửa)
+
+## 📂 Cấu trúc Project
 
 ```
 viet_nhat_ky/
-├── backend/          # Node.js + Express API
+├── backend/                 # Next.js API Server
+│   ├── prisma/
+│   │   └── schema.prisma   # Database schema
 │   ├── src/
-│   │   ├── config/      # Cấu hình
-│   │   ├── controllers/ # Xử lý logic
-│   │   ├── middleware/  # Middleware (auth, error)
-│   │   ├── models/      # Mongoose models
-│   │   ├── routes/      # API routes
-│   │   ├── validators/  # Validation rules
-│   │   └── server.js    # Entry point
-│   ├── .env            # Environment variables
-│   └── package.json
+│   │   ├── app/
+│   │   │   └── api/        # API Routes
+│   │   │       ├── auth/
+│   │   │       │   ├── login/
+│   │   │       │   ├── register/
+│   │   │       │   └── me/
+│   │   │       ├── entries/
+│   │   │       │   ├── route.ts
+│   │   │       │   └── today/
+│   │   │       └── stats/
+│   │   └── lib/
+│   │       ├── prisma.ts
+│   │       ├── auth.ts
+│   │       └── utils.ts
+│   ├── package.json
+│   └── .env
 │
-└── mobile/           # Flutter App
-    ├── lib/
-    │   ├── config/      # Theme & App config
-    │   ├── models/      # Data models
-    │   ├── providers/   # State management
-    │   ├── screens/     # UI screens
-    │   ├── services/    # API services
-    │   ├── widgets/     # Reusable widgets
-    │   └── main.dart    # Entry point
-    └── pubspec.yaml
+└── mobile/                  # Flutter App
+    └── lib/
+        ├── config/
+        │   ├── app_config.dart
+        │   └── theme.dart
+        ├── models/
+        │   ├── user.dart
+        │   ├── daily_entry.dart
+        │   └── mood_stats.dart
+        ├── services/
+        │   ├── api_service.dart
+        │   ├── auth_service.dart
+        │   └── entry_service.dart
+        ├── providers/
+        │   ├── auth_provider.dart
+        │   └── entry_provider.dart
+        ├── widgets/
+        │   ├── mood_selector.dart
+        │   ├── tag_selector.dart
+        │   ├── entry_card.dart
+        │   └── common_widgets.dart
+        ├── screens/
+        │   ├── splash_screen.dart
+        │   ├── auth/
+        │   │   ├── login_screen.dart
+        │   │   └── register_screen.dart
+        │   ├── main/
+        │   │   ├── main_screen.dart
+        │   │   ├── home_tab.dart
+        │   │   ├── calendar_tab.dart
+        │   │   └── stats_tab.dart
+        │   └── entry/
+        │       └── create_entry_screen.dart
+        └── main.dart
 ```
 
 ## 🚀 Hướng dẫn chạy
 
-### Prerequisites
+### Backend (Next.js)
 
-- Node.js v18+
-- MongoDB (local hoặc MongoDB Atlas)
-- Flutter SDK 3.0+
-- Android Studio / Xcode
-
-### Backend
-
-1. **Cài đặt dependencies:**
 ```bash
 cd backend
+
+# Install dependencies
 npm install
-```
 
-2. **Cấu hình environment:**
-```bash
-# Sửa file .env với MongoDB URI của bạn
-MONGODB_URI=mongodb://localhost:27017/viet_nhat_ky
-JWT_SECRET=your_secret_key_here
-```
+# Generate Prisma Client
+npm run db:generate
 
-3. **Chạy server:**
-```bash
-# Development mode
+# Push schema to database
+npm run db:push
+
+# Start development server
 npm run dev
-
-# Production mode
-npm start
 ```
 
-Server sẽ chạy tại `http://localhost:3000`
+Server sẽ chạy tại: http://localhost:3000
 
 ### Mobile (Flutter)
 
-1. **Cài đặt dependencies:**
 ```bash
 cd mobile
+
+# Get dependencies
 flutter pub get
-```
 
-2. **Cấu hình API URL:**
-Sửa file `lib/config/app_config.dart`:
-```dart
-// Android Emulator
-static const String baseUrl = 'http://10.0.2.2:3000';
-
-// iOS Simulator  
-static const String baseUrl = 'http://localhost:3000';
-
-// Device thật (thay bằng IP máy bạn)
-static const String baseUrl = 'http://192.168.x.x:3000';
-```
-
-3. **Chạy app:**
-```bash
+# Run on device/emulator
 flutter run
 ```
 
-## 📱 Tính năng
+**Lưu ý**: Đổi `baseUrl` trong `lib/config/app_config.dart`:
+- Android Emulator: `http://10.0.2.2:3000/api`
+- iOS Simulator: `http://localhost:3000/api`
+- Physical device: `http://<your-ip>:3000/api`
 
-### ✅ Đã hoàn thành (MVP)
+## 📡 API Endpoints
 
-- [x] **Authentication**
-  - Đăng ký / Đăng nhập
-  - JWT Token
-  - Auto-login
-
-- [x] **Check-in cảm xúc**
-  - 5 mức cảm xúc (😢 😔 😐 😊 😄)
-  - Ghi chú (optional)
-  - Tags phân loại
-  - Logic 1 lần/ngày (có thể sửa)
-
-- [x] **Lịch sử**
-  - Calendar view
-  - Màu theo cảm xúc
-  - Xem chi tiết entry
-
-- [x] **Thống kê**
-  - Biểu đồ tuần
-  - Biểu đồ phân bố cảm xúc
-  - Streak tracking
-  - Top tags
-
-## 🔗 API Endpoints
-
-### Auth
 | Method | Endpoint | Mô tả |
 |--------|----------|-------|
-| POST | `/api/auth/register` | Đăng ký |
-| POST | `/api/auth/login` | Đăng nhập |
-| GET | `/api/auth/me` | Lấy thông tin user |
+| POST | /api/auth/register | Đăng ký tài khoản |
+| POST | /api/auth/login | Đăng nhập |
+| GET | /api/auth/me | Lấy thông tin user |
+| GET | /api/entries/today | Lấy entry hôm nay |
+| GET | /api/entries | Lấy danh sách entries |
+| POST | /api/entries | Tạo/cập nhật entry |
+| GET | /api/stats | Lấy thống kê |
 
-### Entries
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| POST | `/api/entries` | Tạo/Cập nhật entry hôm nay |
-| GET | `/api/entries/today` | Lấy entry hôm nay |
-| GET | `/api/entries?year=&month=` | Lấy entries theo tháng |
-| DELETE | `/api/entries/:id` | Xóa entry (chỉ hôm nay) |
+## 🎨 Mood Levels
 
-### Stats
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| GET | `/api/stats/monthly` | Thống kê tháng |
-| GET | `/api/stats/weekly` | Thống kê tuần |
-| GET | `/api/stats/streak` | Lấy streak |
-| GET | `/api/stats/overview` | Tổng quan |
+| Score | Emoji | Label | Color |
+|-------|-------|-------|-------|
+| 1 | 😢 | Tệ | Red |
+| 2 | 😔 | Không tốt | Orange |
+| 3 | 😐 | Bình thường | Yellow |
+| 4 | 😊 | Tốt | Green |
+| 5 | 🤩 | Tuyệt vời | Blue |
 
-## 🛠️ Tech Stack
+## 🛠 Tech Stack
 
-### Backend
-- **Runtime:** Node.js
-- **Framework:** Express.js
-- **Database:** MongoDB + Mongoose
-- **Auth:** JWT (jsonwebtoken)
-- **Validation:** express-validator
+**Backend:**
+- Next.js 14 (App Router)
+- Prisma ORM
+- PostgreSQL
+- JWT Authentication
+- Zod Validation
 
-### Frontend (Mobile)
-- **Framework:** Flutter
-- **State Management:** Provider
-- **HTTP Client:** http package
-- **Charts:** fl_chart
-- **Calendar:** table_calendar
-- **Local Storage:** shared_preferences
+**Mobile:**
+- Flutter 3.x
+- Provider (State Management)
+- table_calendar
+- fl_chart
+- http package
 
-## 📝 License
+## 📝 Environment Variables
 
-MIT License
+Tạo file `.env` trong thư mục `backend/`:
+
+```env
+DATABASE_URL="your_postgres_url"
+JWT_SECRET="your_secret_key"
+JWT_EXPIRES_IN="7d"
+```
+
+## 🔮 Future Improvements
+
+- [ ] Push notifications nhắc nhở ghi nhật ký
+- [ ] Export dữ liệu ra PDF/CSV
+- [ ] Dark mode
+- [ ] Widget cho home screen
+- [ ] Reminder settings
+- [ ] Cloud backup
+
+---
+
+Made with ❤️ using Flutter & Next.js

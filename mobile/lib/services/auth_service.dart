@@ -1,103 +1,97 @@
-import '../config/app_config.dart';
-import '../models/index.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/user.dart';
 import 'api_service.dart';
 
-/// Service xử lý Authentication
 class AuthService {
   final ApiService _api = ApiService();
+  static const String _tokenKey = 'auth_token';
+  static const String _userKey = 'user_data';
 
-  /// Đăng ký tài khoản
-  Future<AuthResult> register({
+  // Singleton pattern
+  static final AuthService _instance = AuthService._internal();
+  factory AuthService() => _instance;
+  AuthService._internal();
+
+  User? _currentUser;
+  User? get currentUser => _currentUser;
+
+  // Initialize - check if user is logged in
+  Future<bool> initialize() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(_tokenKey);
+    
+    if (token != null) {
+      _api.setToken(token);
+      
+      try {
+        // Verify token by getting user profile
+        final response = await _api.get('/auth/me');
+        final data = response['data'] as Map<String, dynamic>;
+        _currentUser = User.fromJson(data['user'] as Map<String, dynamic>);
+        return true;
+      } catch (e) {
+        // Token is invalid, clear it
+        await logout();
+        return false;
+      }
+    }
+    
+    return false;
+  }
+
+  // Register new user
+  Future<User> register({
     required String email,
     required String password,
     String? name,
   }) async {
-    final response = await _api.post(
-      AppConfig.registerEndpoint,
-      body: {
-        'email': email,
-        'password': password,
-        if (name != null) 'name': name,
-      },
-    );
+    final response = await _api.post('/auth/register', body: {
+      'email': email,
+      'password': password,
+      if (name != null) 'name': name,
+    });
 
-    if (response.success && response.data != null) {
-      final user = User.fromJson(response.data['user']);
-      final token = response.data['token'] as String;
-      await _api.saveToken(token);
-      return AuthResult(success: true, user: user, token: token);
-    }
-
-    return AuthResult(
-      success: false,
-      message: response.message ?? 'Đăng ký thất bại',
-    );
+    final data = response['data'] as Map<String, dynamic>;
+    final authResponse = AuthResponse.fromJson(data);
+    
+    await _saveAuth(authResponse);
+    return authResponse.user;
   }
 
-  /// Đăng nhập
-  Future<AuthResult> login({
+  // Login user
+  Future<User> login({
     required String email,
     required String password,
   }) async {
-    final response = await _api.post(
-      AppConfig.loginEndpoint,
-      body: {
-        'email': email,
-        'password': password,
-      },
-    );
+    final response = await _api.post('/auth/login', body: {
+      'email': email,
+      'password': password,
+    });
 
-    if (response.success && response.data != null) {
-      final user = User.fromJson(response.data['user']);
-      final token = response.data['token'] as String;
-      await _api.saveToken(token);
-      return AuthResult(success: true, user: user, token: token);
-    }
-
-    return AuthResult(
-      success: false,
-      message: response.message ?? 'Đăng nhập thất bại',
-    );
+    final data = response['data'] as Map<String, dynamic>;
+    final authResponse = AuthResponse.fromJson(data);
+    
+    await _saveAuth(authResponse);
+    return authResponse.user;
   }
 
-  /// Lấy thông tin user hiện tại
-  Future<AuthResult> getCurrentUser() async {
-    final response = await _api.get(AppConfig.meEndpoint);
-
-    if (response.success && response.data != null) {
-      final user = User.fromJson(response.data['user']);
-      return AuthResult(success: true, user: user);
-    }
-
-    return AuthResult(
-      success: false,
-      message: response.message ?? 'Không thể lấy thông tin user',
-    );
-  }
-
-  /// Đăng xuất
+  // Logout user
   Future<void> logout() async {
-    await _api.clearToken();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_tokenKey);
+    await prefs.remove(_userKey);
+    _api.setToken(null);
+    _currentUser = null;
   }
 
-  /// Kiểm tra đã đăng nhập chưa
-  Future<bool> isLoggedIn() async {
-    await _api.loadToken();
-    return _api.hasToken;
+  // Save authentication data
+  Future<void> _saveAuth(AuthResponse authResponse) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_tokenKey, authResponse.token);
+    _api.setToken(authResponse.token);
+    _currentUser = authResponse.user;
   }
-}
 
-/// Kết quả xác thực
-class AuthResult {
-  final bool success;
-  final User? user;
-  final String? token;
-  final String? message;
-
-  AuthResult({
-    required this.success,
-    this.user,
-    this.token,
-    this.message,
-  });
+  // Check if user is logged in
+  bool get isLoggedIn => _currentUser != null && _api.token != null;
 }

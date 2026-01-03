@@ -1,26 +1,24 @@
-/// Model User
 class User {
   final String id;
   final String email;
   final String? name;
-  final String? avatar;
-  final DateTime createdAt;
+  final DateTime? createdAt;
 
   User({
     required this.id,
     required this.email,
     this.name,
-    this.avatar,
-    required this.createdAt,
+    this.createdAt,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['_id'] ?? json['id'],
-      email: json['email'],
-      name: json['name'],
-      avatar: json['avatar'],
-      createdAt: DateTime.parse(json['createdAt']),
+      id: json['id'] as String,
+      email: json['email'] as String,
+      name: json['name'] as String?,
+      createdAt: json['createdAt'] != null 
+          ? DateTime.parse(json['createdAt'] as String)
+          : null,
     );
   }
 
@@ -29,10 +27,24 @@ class User {
       'id': id,
       'email': email,
       'name': name,
-      'avatar': avatar,
-      'createdAt': createdAt.toIso8601String(),
+      'createdAt': createdAt?.toIso8601String(),
     };
   }
+}
 
-  String get displayName => name ?? email.split('@').first;
+class AuthResponse {
+  final User user;
+  final String token;
+
+  AuthResponse({
+    required this.user,
+    required this.token,
+  });
+
+  factory AuthResponse.fromJson(Map<String, dynamic> json) {
+    return AuthResponse(
+      user: User.fromJson(json['user'] as Map<String, dynamic>),
+      token: json['token'] as String,
+    );
+  }
 }
