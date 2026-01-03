@@ -41,10 +41,14 @@ class _LoginScreenState extends State<LoginScreen> {
         MaterialPageRoute(builder: (_) => const MainScreen()),
       );
     } else {
+      final errorMsg = authProvider.errorMessage ?? 'Đăng nhập thất bại';
+      print('Login failed: $errorMsg');
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.errorMessage ?? 'Đăng nhập thất bại'),
+          content: Text(errorMsg),
           backgroundColor: AppTheme.errorColor,
+          duration: const Duration(seconds: 5),
         ),
       );
     }

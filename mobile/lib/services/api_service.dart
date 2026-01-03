@@ -65,18 +65,26 @@ class ApiService {
   Future<Map<String, dynamic>> post(String endpoint,
       {Map<String, dynamic>? body}) async {
     try {
+      final url = Uri.parse('$baseUrl$endpoint');
+      print('POST Request: $url');
+      print('Body: $body');
+      
       final response = await http
           .post(
-            Uri.parse('$baseUrl$endpoint'),
+            url,
             headers: _headers,
             body: body != null ? jsonEncode(body) : null,
           )
           .timeout(AppConfig.connectionTimeout);
 
+      print('Response Status: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      
       return _handleResponse(response);
     } catch (e) {
+      print('API Error: $e');
       if (e is ApiException) rethrow;
-      throw ApiException('Không thể kết nối đến server');
+      throw ApiException('Không thể kết nối đến server: ${e.toString()}');
     }
   }
 
