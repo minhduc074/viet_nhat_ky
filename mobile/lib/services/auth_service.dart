@@ -75,6 +75,9 @@ class AuthService {
     return authResponse.user;
   }
 
+  // Check if user has admin role
+  bool get isAdmin => _currentUser?.role == 'admin';
+
   // Logout user
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();

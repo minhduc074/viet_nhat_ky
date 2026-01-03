@@ -1,93 +1,67 @@
-# Viet Nhat Ky - Admin Panel
+# Viết Nhật Ký - Admin UI
 
-Angular-based admin dashboard for managing users and monitoring AI API usage.
+Admin dashboard để quản lý người dùng và theo dõi AI usage của ứng dụng Viết Nhật Ký.
 
-## Features
+## Tính năng
 
-### 📊 Dashboard
-- Overview statistics (users, entries, insights, AI calls)
-- AI usage summary for last 30 days
-- Success rates and performance metrics
-- Recent users and AI requests
+- **Dashboard**: Tổng quan về người dùng, entries, và AI usage
+- **Quản lý người dùng**: Xem, tạo, sửa, xóa người dùng
+- **AI Usage**: Theo dõi chi tiết các lượt gọi AI API
 
-### 👥 User Management
-- List all users with search and pagination
-- Create new users
-- Edit user details (name, role, status)
-- Delete users
-- View user statistics (entries, insights, AI usage)
+## Cài đặt
 
-### 🤖 AI Usage Monitoring
-- Real-time AI API call logging
-- Filter by provider (ChatGPT/Gemini), date range
-- Token usage tracking
-- Response time metrics
-- Error tracking and monitoring
-- Success rate analytics
-
-## Setup
-
-### Prerequisites
-- Node.js 18+ and npm
-- Backend server running (see backend folder)
-
-### Installation
-
-1. Install dependencies:
 ```bash
 cd admin-ui
 npm install
 ```
 
-2. Configure backend API URL:
-Edit `src/app/services/admin.service.ts` and update the `baseUrl`:
-```typescript
-private baseUrl = 'http://localhost:3000/api/admin'; // Update with your backend URL
-```
-
-3. Set up authentication token:
-The admin panel requires an admin JWT token. See `ADMIN_SETUP.md` in the root directory for detailed setup instructions.
-
-## Development server
-
-To start a local development server, run:
+## Chạy development server
 
 ```bash
-ng serve
+npm run dev
 ```
 
-Navigate to `http://localhost:4200/`
+Mở [http://localhost:3001](http://localhost:3001) trong trình duyệt.
 
-## Building
+## Biến môi trường
 
-To build the project run:
+Tạo file `.env.local`:
+
+```env
+NEXT_PUBLIC_API_URL=https://viet-nhat-ky.vercel.app
+```
+
+## Tech Stack
+
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+- Recharts (biểu đồ)
+- Lucide React (icons)
+
+## Cấu trúc thư mục
+
+```
+src/
+├── app/
+│   ├── context/        # Auth context
+│   ├── dashboard/      # Dashboard pages
+│   │   ├── page.tsx    # Dashboard overview
+│   │   ├── users/      # User management
+│   │   └── ai-usage/   # AI usage tracking
+│   ├── login/          # Login page
+│   └── services/       # API service
+└── ...
+```
+
+## Đăng nhập
+
+Sử dụng tài khoản admin đã tạo từ backend:
 
 ```bash
-ng build
+cd ../backend
+npm run create-admin
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory.
-
-## Project Structure
-
-```
-src/app/
-├── components/
-│   ├── dashboard/       # Main dashboard with statistics
-│   ├── users/          # User management CRUD
-│   └── ai-usage/       # AI usage monitoring
-├── services/
-│   └── admin.service.ts # API service for backend communication
-├── interceptors/
-│   └── auth.interceptor.ts # JWT token interceptor
-├── models/
-│   └── admin.models.ts  # TypeScript interfaces
-└── app.routes.ts       # Application routing
-```
-
-## Additional Resources
-
-For more information on using the Angular CLI, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
-
-For detailed setup instructions, see `ADMIN_SETUP.md` in the project root.
+Sau đó đăng nhập với email và mật khẩu admin.
 

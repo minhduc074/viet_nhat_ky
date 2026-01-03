@@ -37,14 +37,24 @@ export async function POST(request: NextRequest) {
       return errorResponse('Email hoặc mật khẩu không đúng', 401);
     }
     
-    // Generate token
-    const token = generateToken({ userId: user.id, email: user.email });
+    // Check if user is active
+    if (!user.isActive) {
+      return errorResponse('Tài khoản đã bị vô hiệu hóa', 403);
+    }
+    
+    // Generate token with role
+    const token = generateToken({ 
+      userId: user.id, 
+      email: user.email,
+      role: user.role || 'user'
+    });
     
     return successResponse({
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
       },
       token,
     }, 'Đăng nhập thành công');
