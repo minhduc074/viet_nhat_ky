@@ -4,12 +4,13 @@ import { getUserFromRequest, errorResponse, successResponse } from '@/lib/apiUti
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = await getUserFromRequest(request);
     if (!userId) return errorResponse('Unauthorized', 401);
     
+    const params = await props.params;
     const entryId = parseInt(params.id);
     
     const entry = await prisma.dailyEntry.findFirst({
@@ -32,12 +33,13 @@ export async function GET(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = await getUserFromRequest(request);
     if (!userId) return errorResponse('Unauthorized', 401);
     
+    const params = await props.params;
     const entryId = parseInt(params.id);
     
     // Check if entry exists and belongs to user
