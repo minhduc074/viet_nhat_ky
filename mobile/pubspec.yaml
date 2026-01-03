@@ -1,5 +1,5 @@
 name: viet_nhat_ky
-description: "Ứng dụng Micro-journaling theo dõi cảm xúc hàng ngày"
+description: "Nhật Ký Tâm Trạng - Ứng dụng ghi chép và theo dõi cảm xúc hàng ngày"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -28,6 +28,10 @@ dependencies:
   intl: ^0.20.2
   # Google Fonts
   google_fonts: ^6.1.0
+  # Local Notifications
+  flutter_local_notifications: ^18.0.1
+  # Timezone
+  timezone: ^0.10.0
 
 dev_dependencies:
   flutter_test:

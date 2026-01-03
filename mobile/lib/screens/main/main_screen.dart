@@ -3,10 +3,10 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/entry_provider.dart';
-import '../auth/login_screen.dart';
 import 'home_tab.dart';
 import 'calendar_tab.dart';
 import 'stats_tab.dart';
+import 'settings_tab.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -22,6 +22,7 @@ class _MainScreenState extends State<MainScreen> {
     HomeTab(),
     CalendarTab(),
     StatsTab(),
+    SettingsTab(),
   ];
 
   @override
@@ -33,51 +34,11 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
-  void _handleLogout() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Đăng xuất'),
-        content: const Text('Bạn có chắc muốn đăng xuất?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Hủy'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.errorColor,
-            ),
-            child: const Text('Đăng xuất'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      await context.read<AuthProvider>().logout();
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (route) => false,
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Viết Nhật Ký'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _handleLogout,
-            tooltip: 'Đăng xuất',
-          ),
-        ],
+        title: const Text('Nhật Ký Tâm Trạng'),
       ),
       body: IndexedStack(
         index: _currentIndex,
@@ -115,6 +76,11 @@ class _MainScreenState extends State<MainScreen> {
               icon: Icon(Icons.bar_chart_outlined),
               activeIcon: Icon(Icons.bar_chart),
               label: 'Thống kê',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings_outlined),
+              activeIcon: Icon(Icons.settings),
+              label: 'Cài đặt',
             ),
           ],
         ),

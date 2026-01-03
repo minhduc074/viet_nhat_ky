@@ -50,6 +50,13 @@ class AppTheme {
     }
   }
 
+  // Dark theme colors
+  static const Color darkBackgroundColor = Color(0xFF1A1A2E);
+  static const Color darkSurfaceColor = Color(0xFF16213E);
+  static const Color darkCardColor = Color(0xFF0F3460);
+  static const Color darkTextPrimary = Color(0xFFE8E8E8);
+  static const Color darkTextSecondary = Color(0xFFB8B8B8);
+
   // Light Theme
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
@@ -182,6 +189,143 @@ class AppTheme {
       backgroundColor: Colors.white,
       selectedItemColor: primaryColor,
       unselectedItemColor: textLight,
+      type: BottomNavigationBarType.fixed,
+      elevation: 8,
+    ),
+  );
+
+  // Dark Theme
+  static ThemeData darkTheme = ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    colorScheme: ColorScheme.dark(
+      primary: primaryLight,
+      secondary: secondaryColor,
+      surface: darkSurfaceColor,
+      error: errorColor,
+    ),
+    scaffoldBackgroundColor: darkBackgroundColor,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      centerTitle: true,
+      iconTheme: const IconThemeData(color: darkTextPrimary),
+      titleTextStyle: GoogleFonts.nunito(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: darkTextPrimary,
+      ),
+    ),
+    cardTheme: CardThemeData(
+      color: darkCardColor,
+      elevation: 2,
+      shadowColor: Colors.black.withValues(alpha: 0.3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primaryLight,
+        foregroundColor: darkBackgroundColor,
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        textStyle: GoogleFonts.nunito(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: primaryLight,
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        side: const BorderSide(color: primaryLight, width: 2),
+        textStyle: GoogleFonts.nunito(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: darkSurfaceColor,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: darkCardColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: primaryLight, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: errorColor),
+      ),
+      hintStyle: GoogleFonts.nunito(
+        color: darkTextSecondary,
+        fontSize: 14,
+      ),
+    ),
+    textTheme: TextTheme(
+      displayLarge: GoogleFonts.nunito(
+        fontSize: 32,
+        fontWeight: FontWeight.bold,
+        color: darkTextPrimary,
+      ),
+      displayMedium: GoogleFonts.nunito(
+        fontSize: 28,
+        fontWeight: FontWeight.bold,
+        color: darkTextPrimary,
+      ),
+      headlineLarge: GoogleFonts.nunito(
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
+        color: darkTextPrimary,
+      ),
+      headlineMedium: GoogleFonts.nunito(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: darkTextPrimary,
+      ),
+      titleLarge: GoogleFonts.nunito(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: darkTextPrimary,
+      ),
+      titleMedium: GoogleFonts.nunito(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        color: darkTextPrimary,
+      ),
+      bodyLarge: GoogleFonts.nunito(
+        fontSize: 16,
+        color: darkTextPrimary,
+      ),
+      bodyMedium: GoogleFonts.nunito(
+        fontSize: 14,
+        color: darkTextSecondary,
+      ),
+      labelLarge: GoogleFonts.nunito(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: darkTextPrimary,
+      ),
+    ),
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: darkSurfaceColor,
+      selectedItemColor: primaryLight,
+      unselectedItemColor: darkTextSecondary,
       type: BottomNavigationBarType.fixed,
       elevation: 8,
     ),
