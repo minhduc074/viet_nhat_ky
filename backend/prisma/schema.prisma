@@ -15,6 +15,8 @@ model User {
   email     String   @unique
   password  String
   name      String?
+  role      String   @default("user") // "user" or "admin"
+  isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -23,6 +25,9 @@ model User {
 
   // Relation to monthly insights
   insights MonthlyInsight[]
+
+  // Relation to AI usage logs
+  aiUsages AIUsage[]
 
   @@map("users")
 }
@@ -64,4 +69,27 @@ model MonthlyInsight {
   @@unique([userId, month])
   @@index([userId, month])
   @@map("monthly_insights")
+}
+
+// AIUsage model - tracks AI API calls and usage statistics
+model AIUsage {
+  id             String   @id @default(cuid())
+  userId         String?  @map("user_id") // Nullable for system-wide requests
+  provider       String   // "chatgpt" or "gemini"
+  endpoint       String   // API endpoint called
+  promptTokens   Int      @default(0) @map("prompt_tokens")
+  responseTokens Int      @default(0) @map("response_tokens")
+  totalTokens    Int      @default(0) @map("total_tokens")
+  success        Boolean  @default(true) // Whether the call succeeded
+  errorMessage   String?  @map("error_message") @db.Text
+  responseTimeMs Int      @map("response_time_ms") // Response time in milliseconds
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relation to user (optional)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([provider])
+  @@index([createdAt])
+  @@map("ai_usages")
 }

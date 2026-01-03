@@ -1,0 +1,148 @@
+<div class="ai-usage-container">
+  <h1>AI API Usage Monitoring</h1>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-group">
+      <label>Provider:</label>
+      <select [(ngModel)]="filters.provider" class="filter-input">
+        <option value="">All Providers</option>
+        <option value="chatgpt">ChatGPT</option>
+        <option value="gemini">Gemini</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Start Date:</label>
+      <input type="date" [(ngModel)]="filters.startDate" class="filter-input" />
+    </div>
+    <div class="filter-group">
+      <label>End Date:</label>
+      <input type="date" [(ngModel)]="filters.endDate" class="filter-input" />
+    </div>
+    <div class="filter-actions">
+      <button class="btn btn-primary" (click)="applyFilters()">Apply Filters</button>
+      <button class="btn btn-secondary" (click)="clearFilters()">Clear</button>
+    </div>
+  </div>
+
+  <!-- Statistics Summary -->
+  <div *ngIf="statistics && !loading" class="statistics">
+    <h2>Summary Statistics</h2>
+    <div class="cards-grid">
+      <div class="card">
+        <h3>Total Calls</h3>
+        <p class="stat-value">{{ formatNumber(statistics.totalCalls) }}</p>
+        <p class="stat-detail success">✓ {{ formatNumber(statistics.successfulCalls) }}</p>
+        <p class="stat-detail error">✗ {{ formatNumber(statistics.failedCalls) }}</p>
+      </div>
+      
+      <div class="card">
+        <h3>Success Rate</h3>
+        <p class="stat-value">{{ formatPercent(statistics.successRate) }}</p>
+      </div>
+
+      <div class="card">
+        <h3>Total Tokens</h3>
+        <p class="stat-value">{{ formatNumber(statistics.totalTokens) }}</p>
+        <p class="stat-detail">Prompt: {{ formatNumber(statistics.totalPromptTokens) }}</p>
+        <p class="stat-detail">Response: {{ formatNumber(statistics.totalResponseTokens) }}</p>
+      </div>
+
+      <div class="card">
+        <h3>Avg Response Time</h3>
+        <p class="stat-value">{{ formatTime(statistics.avgResponseTime) }}</p>
+      </div>
+    </div>
+
+    <!-- By Provider -->
+    <div *ngIf="statistics.byProvider && statistics.byProvider.length > 0" class="provider-stats">
+      <h3>By Provider</h3>
+      <table class="stats-table">
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>Calls</th>
+            <th>Total Tokens</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let provider of statistics.byProvider">
+            <td>{{ provider.provider }}</td>
+            <td>{{ formatNumber(provider.calls) }}</td>
+            <td>{{ formatNumber(provider.totalTokens) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading">Loading AI usage data...</div>
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <!-- Usage Log -->
+  <div *ngIf="!loading && usages.length > 0" class="usage-content">
+    <h2>Usage Log</h2>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>User</th>
+          <th>Provider</th>
+          <th>Endpoint</th>
+          <th>Tokens</th>
+          <th>Response Time</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let usage of usages">
+          <td>{{ usage.createdAt | date:'short' }}</td>
+          <td>{{ usage.user?.email || 'System' }}</td>
+          <td>{{ usage.provider }}</td>
+          <td class="endpoint">{{ usage.endpoint }}</td>
+          <td>
+            <div class="token-info">
+              <span class="token-total">{{ formatNumber(usage.totalTokens) }}</span>
+              <small>({{ usage.promptTokens }}/{{ usage.responseTokens }})</small>
+            </div>
+          </td>
+          <td>{{ formatTime(usage.responseTimeMs) }}</td>
+          <td>
+            <span [class]="usage.success ? 'badge success' : 'badge error'">
+              {{ usage.success ? 'Success' : 'Failed' }}
+            </span>
+            <div *ngIf="!usage.success && usage.errorMessage" class="error-message">
+              {{ usage.errorMessage }}
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div *ngIf="pagination" class="pagination">
+      <button 
+        class="btn btn-secondary" 
+        (click)="goToPage(pagination.page - 1)"
+        [disabled]="pagination.page === 1"
+      >
+        Previous
+      </button>
+      <span class="page-info">
+        Page {{ pagination.page }} of {{ pagination.totalPages }} 
+        ({{ pagination.total }} total)
+      </span>
+      <button 
+        class="btn btn-secondary" 
+        (click)="goToPage(pagination.page + 1)"
+        [disabled]="pagination.page === pagination.totalPages"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && usages.length === 0" class="no-data">
+    No AI usage data found for the selected filters.
+  </div>
+</div>

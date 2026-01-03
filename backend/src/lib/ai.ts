@@ -1,4 +1,5 @@
 import https from 'https';
+import { prisma } from './prisma';
 
 interface GeminiMessage {
   role: 'user' | 'model';
@@ -46,14 +47,48 @@ interface EntryData {
 }
 
 /**
+ * Log AI usage to database
+ */
+async function logAIUsage(
+  provider: string,
+  endpoint: string,
+  success: boolean,
+  responseTimeMs: number,
+  userId?: string,
+  errorMessage?: string,
+  promptTokens = 0,
+  responseTokens = 0
+) {
+  try {
+    await prisma.aIUsage.create({
+      data: {
+        userId,
+        provider,
+        endpoint,
+        promptTokens,
+        responseTokens,
+        totalTokens: promptTokens + responseTokens,
+        success,
+        errorMessage,
+        responseTimeMs,
+      },
+    });
+  } catch (error) {
+    console.error('Failed to log AI usage:', error);
+  }
+}
+
+/**
  * Call Gemini Pro AI via RapidAPI
  */
-export async function callGeminiAI(contents: GeminiMessage[]): Promise<string> {
+export async function callGeminiAI(contents: GeminiMessage[], userId?: string): Promise<string> {
   const apiKey = process.env.RAPIDAPI_KEY;
   
   if (!apiKey) {
     throw new Error('RAPIDAPI_KEY không được cấu hình');
   }
+
+  const startTime = Date.now();
 
   return new Promise((resolve, reject) => {
     const options = {
@@ -76,6 +111,7 @@ export async function callGeminiAI(contents: GeminiMessage[]): Promise<string> {
       });
 
       res.on('end', function () {
+        const responseTime = Date.now() - startTime;
         try {
           const body = Buffer.concat(chunks);
           const bodyString = body.toString();
@@ -86,13 +122,32 @@ export async function callGeminiAI(contents: GeminiMessage[]): Promise<string> {
           
           if (response.candidates && response.candidates.length > 0) {
             const text = response.candidates[0].content.parts[0].text;
+            
+            // Log successful usage
+            logAIUsage(
+              'gemini',
+              'gemini-pro-ai.p.rapidapi.com',
+              true,
+              responseTime,
+              userId,
+              undefined,
+              response.usageMetadata?.promptTokenCount || 0,
+              response.usageMetadata?.candidatesTokenCount || 0
+            );
+            
             resolve(text);
           } else {
             console.error('Invalid AI response structure:', response);
-            reject(new Error(`Không nhận được phản hồi từ AI. Response: ${bodyString.substring(0, 200)}`));
+            const errorMsg = `Không nhận được phản hồi từ AI. Response: ${bodyString.substring(0, 200)}`;
+            
+            // Log failed usage
+            logAIUsage('gemini', 'gemini-pro-ai.p.rapidapi.com', false, responseTime, userId, errorMsg);
+            
+            reject(new Error(errorMsg));
           }
         } catch (error) {
           console.error('Parse error:', error);
+          logAIUsage('gemini', 'gemini-pro-ai.p.rapidapi.com', false, Date.now() - startTime, userId, String(error));
           reject(error);
         }
       });
@@ -108,11 +163,13 @@ export async function callGeminiAI(contents: GeminiMessage[]): Promise<string> {
 }
 
 // Call ChatGPT RapidAPI (chatgpt-api8)
-export async function callChatGPTAPI(prompt: string): Promise<string> {
+export async function callChatGPTAPI(prompt: string, userId?: string): Promise<string> {
   const apiKey = process.env.RAPIDAPI_KEY;
   if (!apiKey) {
     throw new Error('RAPIDAPI_KEY không được cấu hình');
   }
+
+  const startTime = Date.now();
 
   return new Promise((resolve, reject) => {
     const options = {
@@ -135,6 +192,7 @@ export async function callChatGPTAPI(prompt: string): Promise<string> {
       });
 
       res.on('end', function () {
+        const responseTime = Date.now() - startTime;
         try {
           const body = Buffer.concat(chunks).toString();
           console.log('ChatGPT Response:', body);
@@ -142,13 +200,34 @@ export async function callChatGPTAPI(prompt: string): Promise<string> {
           const parsed: ChatGPTResponse = JSON.parse(body);
 
           if (parsed && parsed.text) {
+            // Log successful usage (estimate tokens)
+            const promptTokens = Math.ceil(prompt.length / 4);
+            const responseTokens = Math.ceil(parsed.text.length / 4);
+            
+            logAIUsage(
+              'chatgpt',
+              'chatgpt-api8.p.rapidapi.com',
+              true,
+              responseTime,
+              userId,
+              undefined,
+              promptTokens,
+              responseTokens
+            );
+            
             resolve(parsed.text);
           } else {
             console.error('Invalid ChatGPT response:', parsed);
-            reject(new Error(`Không nhận được phản hồi từ ChatGPT. Response: ${body.substring(0, 200)}`));
+            const errorMsg = `Không nhận được phản hồi từ ChatGPT. Response: ${body.substring(0, 200)}`;
+            
+            // Log failed usage
+            logAIUsage('chatgpt', 'chatgpt-api8.p.rapidapi.com', false, responseTime, userId, errorMsg);
+            
+            reject(new Error(errorMsg));
           }
         } catch (err) {
           console.error('ChatGPT parse error:', err);
+          logAIUsage('chatgpt', 'chatgpt-api8.p.rapidapi.com', false, Date.now() - startTime, userId, String(err));
           reject(err);
         }
       });
@@ -169,17 +248,17 @@ export async function callChatGPTAPI(prompt: string): Promise<string> {
 }
 
 // Generic wrapper: choose provider via AI_PROVIDER env var ("chatgpt" or "gemini")
-export async function callAI(prompt: string): Promise<string> {
+export async function callAI(prompt: string, userId?: string): Promise<string> {
   const provider = (process.env.AI_PROVIDER || 'chatgpt').toLowerCase();
 
   // Primary attempt
   try {
     if (provider === 'gemini') {
       const contents = [{ role: 'user', parts: [{ text: prompt }] }];
-      return await callGeminiAI(contents as any);
+      return await callGeminiAI(contents as any, userId);
     }
 
-    return await callChatGPTAPI(prompt);
+    return await callChatGPTAPI(prompt, userId);
   } catch (primaryError) {
     console.error(`Primary provider (${provider}) failed:`, primaryError);
 
@@ -189,9 +268,9 @@ export async function callAI(prompt: string): Promise<string> {
       console.log(`Attempting fallback provider: ${fallback}`);
       if (fallback === 'gemini') {
         const contents = [{ role: 'user', parts: [{ text: prompt }] }];
-        return await callGeminiAI(contents as any);
+        return await callGeminiAI(contents as any, userId);
       }
-      return await callChatGPTAPI(prompt);
+      return await callChatGPTAPI(prompt, userId);
     } catch (fallbackError) {
       console.error('Fallback provider also failed:', fallbackError);
       // Throw the original error for better debugging
@@ -206,7 +285,8 @@ export async function callAI(prompt: string): Promise<string> {
  */
 export async function generateMonthlyInsights(
   entries: EntryData[],
-  month: string // Format: YYYY-MM or "Tháng 1/2026"
+  month: string, // Format: YYYY-MM or "Tháng 1/2026"
+  userId?: string
 ): Promise<string> {
   if (entries.length === 0) {
     return 'Bạn chưa có bản ghi nào trong tháng này. Hãy bắt đầu ghi chép cảm xúc để nhận được lời khuyên từ AI nhé! 💙';
@@ -275,7 +355,7 @@ ${allNotes.join('\n')}
 - Sử dụng emoji phù hợp để tạo cảm giác gần gũi`;
 
   try {
-    const response = await callAI(prompt);
+    const response = await callAI(prompt, userId);
     return response;
   } catch (error) {
     console.error('AI Error:', error);
